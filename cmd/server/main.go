@@ -1,25 +1,32 @@
 package main
 
 import (
+	"context"
 	"flag"
-	"net/http"
-	"gitlab.com/k2glyph/notification-service/internal/server"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/k2glyph/notification-service/internal/server"
 )
 
-var apiAddr = flag.String("api-addr", ":8322", "API address to listen to")
+var apiAddr = flag.String("api-addr", ":8080", "API address to listen to")
 
 func main() {
-	s := server.NewServer()
-	// r := mux.NewRouter()
-	// api := r.PathPrefix("/api/v1").Subrouter()
-	// api.HandleFunc("", get).Methods(http.MethodGet)
-	// api.HandleFunc("", post).Methods(http.MethodPost)
-	// api.HandleFunc("", put).Methods(http.MethodPut)
-	// api.HandleFunc("", delete).Methods(http.MethodDelete)
-
-	// api.HandleFunc("/user/{userID}/comment/{commentID}", params).Methods(http.MethodGet)
-
-	// fmt.Println("Welcome to notification service")
-	// log.Fatal(http.ListenAndServe(":8080", r))
-
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+	s := server.NewServer(*apiAddr)
+	go func() {
+		err := s.Serve()
+		if err != nil {
+			log.Fatal("Error serving:", err)
+		}
+	}()
+	<-stop
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	s.Shutdown(ctx)
+	log.Println("Exiting")
 }

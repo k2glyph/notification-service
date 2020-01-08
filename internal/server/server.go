@@ -2,26 +2,38 @@ package server
 
 import (
 	"context"
-	"fmt"
+
 	"log"
 	"net/http"
-	"strconv"
-
-	"github.com/gorilla/mux"
 )
 
 type Server struct {
 	server       *http.Server
 	shuttingDown bool
+	workers      map[string]*worker
 }
 
 func (s *Server) Serve() (err error) {
-	log.Println("Notification Service Started")
+	log.Println("Notification Service Started at port", s.server.Addr)
 	err = s.server.ListenAndServe()
 	if s.shuttingDown {
 		err = nil
 	}
 	return
+}
+
+func NewServer(addr string) (s *Server) {
+	mux := http.NewServeMux()
+	h := &http.Server{
+		Addr:    addr,
+		Handler: mux,
+	}
+	s = &Server{
+		server: h,
+	}
+	mux.HandleFunc("/api/push", s.handlePush)
+
+	return s
 }
 func (s *Server) Shutdown(ctx context.Context) (err error) {
 	s.shuttingDown = true
@@ -32,42 +44,4 @@ func (s *Server) Shutdown(ctx context.Context) (err error) {
 	}
 	log.Println("Notification Service Stopped")
 	return
-}
-func handlePush(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	pathParams := mux.Vars(r)
-	userID := -1
-	var err error
-	if val, ok := pathParams["userID"]; ok {
-		userID, err = strconv.Atoi(val)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"message":"need a number"}`))
-			return
-		}
-	}
-	commentID := -1
-	if val, ok := pathParams["commentID"]; ok {
-		commentID, err = strconv.Atoi(val)
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`{"message":"need a number"}`))
-			return
-		}
-	}
-	query := r.URL.Query()
-	location := query.Get("location")
-	w.Write([]byte(fmt.Sprintf(`{"userID": %d, "commentID": %d, "location": "%s" }`, userID, commentID, location)))
-}
-func NewServer(addr string) (s *Server) {
-	mux := http.NewServeMux()
-	h := &http.Server{
-		Addr:    addr,
-		Handler: mux,
-	}
-	s = &Server{
-		server: h,
-	}
-	mux.HandleFunc("/api/push", handlePush)
-	return s
 }

@@ -1,35 +1,35 @@
 package server
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
 func (s *Server) handlePush(w http.ResponseWriter, r *http.Request) {
 	service := strings.TrimPrefix(r.URL.Path, "/api/push/")
-	// s.
-	// w.Header().Set("Content-Type", "application/json")
-	// pathParams := mux.Vars(r)
-	// userID := -1
-	// var err error
-	// if val, ok := pathParams["userID"]; ok {
-	// 	userID, err = strconv.Atoi(val)
-	// 	if err != nil {
-	// 		w.WriteHeader(http.StatusInternalServerError)
-	// 		w.Write([]byte(`{"message":"need a number"}`))
-	// 		return
-	// 	}
-	// }
-	// commentID := -1
-	// if val, ok := pathParams["commentID"]; ok {
-	// 	commentID, err = strconv.Atoi(val)
-	// 	if err != nil {
-	// 		w.WriteHeader(http.StatusInternalServerError)
-	// 		w.Write([]byte(`{"message":"need a number"}`))
-	// 		return
-	// 	}
-	// }
-	// query := r.URL.Query()
-	// location := query.Get("location")
-	// w.Write([]byte(fmt.Sprintf(`{"userID": %d, "commentID": %d, "location": "%s" }`, userID, commentID, location)))
+	wrk, ok := s.workers[service]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	if r.Method != "POST" {
+		http.Error(w, "Invalid request method.", 405)
+		return
+	}
+
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = wrk.push(body)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	w.WriteHeader(http.StatusAccepted)
+	fmt.Fprintf(w, "OK")
 }

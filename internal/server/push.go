@@ -3,11 +3,13 @@ package server
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"strings"
 )
 
 func (s *Server) handlePush(w http.ResponseWriter, r *http.Request) {
+	log.Println(r.URL.Path)
 	service := strings.TrimPrefix(r.URL.Path, "/api/push/")
 	wrk, ok := s.workers[service]
 	if !ok {

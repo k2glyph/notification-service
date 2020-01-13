@@ -6,18 +6,11 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/k2glyph/notification-service/internal/queue"
 	"github.com/k2glyph/notification-service/internal/services"
 )
-
-type Slack struct {
-	transport  *http.Transport
-	wg         sync.WaitGroup
-	webhookUrl string
-}
 
 func NewSlack(webhookUrl string) (slack *Slack, err error) {
 	slack = &Slack{
@@ -36,14 +29,13 @@ func (slack *Slack) ID() string {
 func (slack *Slack) String() string {
 	return "SLACK"
 }
-func (slack *Slack) push(msg []byte, fc services.FeedbackCollector) (done, retry bool) {
-	slackBody, _ := json.Marshal(slackMessage{Text: msg})
+func (slack *Slack) push(msg slackMessage, fc services.FeedbackCollector) (done, retry bool) {
+	slackBody, _ := json.Marshal(msg)
 	req, err := http.NewRequest(http.MethodPost, slack.webhookUrl, bytes.NewBuffer(slackBody))
-
+	req.Header.Add("Content-Type", "application/json")
 	if err != nil {
 		return false, true
 	}
-	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -85,7 +77,11 @@ func (slack *Slack) ServeClient(ctx context.Context, q queue.Queue, fc services.
 			log.Println(slack, "Error reading from queue", err)
 		}
 		msg := qm.Message()
-		done, _ := slack.push(msg, fc)
+		var slackMsg slackMessage
+		if err := json.Unmarshal(msg, &slackMsg); err != nil {
+			log.Println(slack, "Error parsing", err)
+		}
+		done, _ := slack.push(slackMsg, fc)
 		if done {
 			slack.remove(q, qm)
 		}

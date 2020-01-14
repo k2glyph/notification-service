@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+
 	"github.com/k2glyph/notification-service/internal/queue"
 	"github.com/k2glyph/notification-service/internal/services"
 )

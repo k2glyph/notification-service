@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/k2glyph/notification-service/internal/services/email"
+
 	"github.com/k2glyph/notification-service/internal/queue"
 	"github.com/k2glyph/notification-service/internal/queue/memory"
 	"github.com/k2glyph/notification-service/internal/queue/redis"
@@ -16,9 +18,14 @@ import (
 	"github.com/k2glyph/notification-service/internal/services/slack"
 )
 
-var apiAddr = flag.String("api-addr", ":8080", "API address to listen to")
+var apiAddr = flag.String("api-addr", ":8081", "API address to listen to")
 var slackWebhookURL = os.Getenv("slackWebhookURL")
 var redisURL = os.Getenv("redisURL")
+var smtpHost = os.Getenv("smtpHost")
+var smtpPort = os.Getenv("smtpPort")
+var smtpUsername = os.Getenv("smtpUsername")
+var smtpPassword = os.Getenv("smtpPassword")
+var smtpFrom = os.Getenv("smtpFrom")
 
 func main() {
 	stop := make(chan os.Signal, 1)
@@ -39,6 +46,13 @@ func main() {
 			log.Fatal("Error setting up slack service:", err)
 		}
 		s.AddService(slack)
+	}
+	if smtpHost != "" {
+		email, err := email.NewEmail(smtpFrom, smtpUsername, smtpPassword, smtpHost, smtpPort)
+		if err != nil {
+			log.Fatal("Error setting up email service:", err)
+		}
+		s.AddService(email)
 	}
 	go func() {
 		err := s.Serve()

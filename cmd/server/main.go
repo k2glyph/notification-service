@@ -18,7 +18,7 @@ import (
 	"github.com/k2glyph/notification-service/internal/services/slack"
 )
 
-var apiAddr = flag.String("api-addr", ":8081", "API address to listen to")
+var apiAddr = flag.String("api-addr", ":8080", "API address to listen to")
 var slackWebhookURL = os.Getenv("slackWebhookURL")
 var redisURL = os.Getenv("redisURL")
 var smtpHost = os.Getenv("smtpHost")

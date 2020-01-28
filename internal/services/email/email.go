@@ -34,10 +34,11 @@ func (email *Email) String() string {
 	return "EMAIL"
 }
 func (email *Email) push(msg emailMessage) (done, retry bool) {
+	mime := "MIME-version: 1.0;\nContent-Type: text/plain; charset=\"UTF-8\";\n\n"
 	msgBody := "From: " + email.smtpFrom + "\n" + "To: " + msg.To + "\n" + "Subject:" + msg.Subject + " \n\n" + msg.Body
 	err := smtp.SendMail(email.smtpHost+":"+email.smtpPort,
 		smtp.PlainAuth("", email.smtpUsername, email.smtpPassword, email.smtpHost),
-		email.smtpFrom, []string{msg.To}, []byte(msgBody))
+		email.smtpFrom, []string{msg.To}, []byte(mime+"\n"+msgBody))
 	if err != nil {
 		log.Println(email, "Error not able to send email", err)
 		return false, true

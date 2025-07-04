@@ -1,0 +1,56 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:13
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: notifications_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app_network
+
+  mysql:
+    image: mysql:8.0
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: notifications_db_mysql
+      MYSQL_USER: user_mysql
+      MYSQL_PASSWORD: password_mysql
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      # DATABASE_URL: "postgres://user:password@postgres:5432/notifications_db?sslmode=disable"
+      # DATABASE_TYPE: "postgres"
+      DATABASE_URL: "user_mysql:password_mysql@tcp(mysql:3306)/notifications_db_mysql?parseTime=true"
+      DATABASE_TYPE: "mysql"
+      # Add other env vars like SLACK_WEBHOOK_URL, SMTP_HOST etc. as needed
+    depends_on:
+      - postgres # Or mysql, or both if you want to switch easily
+      - mysql
+    networks:
+      - app_network
+
+volumes:
+  postgres_data:
+  mysql_data:
+
+networks:
+  app_network:
+    driver: bridge

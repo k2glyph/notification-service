@@ -10,6 +10,7 @@ import (
 
 	"github.com/k2glyph/notification-service/internal/queue"
 	"github.com/k2glyph/notification-service/internal/services"
+	"github.com/k2glyph/notification-service/internal/store" // Added store
 )
 
 func NewEmail(from string, username string, password string, host string, port string) (email *Email, err error) {
@@ -46,39 +47,94 @@ func (email *Email) push(msg emailMessage) (done, retry bool) {
 	return true, false
 }
 func (email *Email) remove(q queue.Queue, qm queue.QueuedMessage) {
-	if err := q.Remove(qm); err != nil {
+	if err := q.Remove(qm); err != nil { // This remove might be optional if DB state is the source of truth
 		log.Println(email, "error removing from the queue:", err)
 	}
 }
 
-// Serve Client
-func (email *Email) ServeClient(ctx context.Context, q queue.Queue) (err error) {
+// ServeClient processes messages from the queue for Email
+func (email *Email) ServeClient(ctx context.Context, q queue.Queue, s store.Store) (err error) {
 	defer func() {
 		email.wg.Done()
 	}()
+
+	currentAttempts := 0 // Local attempt counter
+
 	for ctx.Err() == nil {
-		qm, err := q.Get(ctx)
+		queuedMsgInterface, err := q.Get(ctx)
 		if err != nil {
+			if ctx.Err() != nil { // Context cancelled
+				return nil
+			}
 			log.Println(email, "Error reading from queue", err)
+			time.Sleep(1 * time.Second)
+			continue
 		}
-		msg := qm.Message()
-		var emailMsg emailMessage
-		if err := json.Unmarshal(msg, &emailMsg); err != nil {
-			log.Println(email, "Error parsing", err)
+
+		rawMsgBytes := queuedMsgInterface.Message()
+		qnm, err := services.ParseQueuedMessage(rawMsgBytes)
+		if err != nil {
+			log.Printf("%s: Error parsing QueuedNotificationMessage: %v. Raw: %s. Discarding.", email, err, string(rawMsgBytes))
+			email.remove(q, queuedMsgInterface)
+			continue
 		}
-		done, _ := email.push(emailMsg)
+
+		currentAttempts = 1 // Reset for new message
+		s.UpdateNotificationStatus(ctx, qnm.NotificationID, "processing", currentAttempts, "")
+
+		var servicePayload emailMessage
+		if err := json.Unmarshal(qnm.Payload, &servicePayload); err != nil {
+			log.Printf("%s: Error unmarshaling Email payload for NotifID %s: %v. Payload: %s", email, qnm.NotificationID, err, string(qnm.Payload))
+			s.UpdateNotificationStatus(ctx, qnm.NotificationID, "failed_parse", currentAttempts, err.Error())
+			email.remove(q, queuedMsgInterface)
+			continue
+		}
+
+		// Ensure 'To' field is populated, either from payload or RecipientInfo
+		if servicePayload.To == "" {
+			if qnm.RecipientInfo == "" {
+				log.Printf("%s: Missing 'To' address in payload and RecipientInfo for NotifID %s.", email, qnm.NotificationID)
+				s.UpdateNotificationStatus(ctx, qnm.NotificationID, "failed_validation", currentAttempts, "Missing recipient 'To' address")
+				email.remove(q, queuedMsgInterface)
+				continue
+			}
+			servicePayload.To = qnm.RecipientInfo
+		}
+
+
+		done, retry := email.push(servicePayload)
+
 		if done {
-			email.remove(q, qm)
+			s.UpdateNotificationStatus(ctx, qnm.NotificationID, "sent", currentAttempts, "")
+			email.remove(q, queuedMsgInterface)
+		} else if retry {
+			currentAttempts++
+			log.Printf("%s: Retrying NotifID %s (local attempts: %d)", email, qnm.NotificationID, currentAttempts)
+			s.UpdateNotificationStatus(ctx, qnm.NotificationID, "retry_queued", currentAttempts, "Service requested retry (e.g. SMTP error)")
+
+			if errRequeue := q.Requeue(queuedMsgInterface); errRequeue != nil {
+				log.Printf("%s: Error requeuing NotifID %s: %v", email, qnm.NotificationID, errRequeue)
+				s.UpdateNotificationStatus(ctx, qnm.NotificationID, "failed_requeue", currentAttempts, errRequeue.Error())
+				email.remove(q, queuedMsgInterface)
+			}
+		} else { // Not done, not retry (should not happen with current email.push logic, as it always returns retry=true on error)
+			log.Printf("%s: Message NotifID %s failed by service and not retryable (unexpected).", email, qnm.NotificationID)
+			s.UpdateNotificationStatus(ctx, qnm.NotificationID, "failed", currentAttempts, "Failed by service (unexpected non-retry)")
+			email.remove(q, queuedMsgInterface)
 		}
 	}
-	return
+	return nil
 }
-func (email *Email) Serve(ctx context.Context, q queue.Queue, fc services.FeedbackCollector) (err error) {
-	for i := 0; i < 4; i++ {
-		go email.ServeClient(ctx, q)
+
+// Serve starts the Email service worker pool.
+// It now accepts a store.Store instance.
+func (email *Email) Serve(ctx context.Context, q queue.Queue, s store.Store, fc services.FeedbackCollector) (err error) {
+	numWorkers := 4 // Configurable
+	for i := 0; i < numWorkers; i++ {
 		email.wg.Add(1)
+		go email.ServeClient(ctx, q, s)
 	}
-	log.Println(email, "Worker started")
+	log.Println(email, "Worker started with", numWorkers, "goroutines")
 	email.wg.Wait()
 	log.Println(email, "Worker Finished")
 	return

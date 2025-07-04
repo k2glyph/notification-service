@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/k2glyph/notification-service/internal/services"
+	"github.com/k2glyph/notification-service/internal/store" // Added store
 
 	"github.com/k2glyph/notification-service/internal/queue"
 )
@@ -62,39 +63,91 @@ func (slack *Slack) push(msg slackMessage) (done, retry bool) {
 	return true, false
 }
 func (slack *Slack) remove(q queue.Queue, qm queue.QueuedMessage) {
-	if err := q.Remove(qm); err != nil {
+	if err := q.Remove(qm); err != nil { // This remove might be optional if DB state is the source of truth
 		log.Println(slack, "error removing from the queue:", err)
 	}
 }
 
-// Serve Client
-func (slack *Slack) ServeClient(ctx context.Context, q queue.Queue) (err error) {
+// ServeClient processes messages from the queue for Slack
+func (slack *Slack) ServeClient(ctx context.Context, q queue.Queue, s store.Store) (err error) {
 	defer func() {
 		slack.wg.Done()
 	}()
+
+	currentAttempts := 0 // Local attempt counter for the current message being processed by this goroutine
+
 	for ctx.Err() == nil {
-		qm, err := q.Get(ctx)
+		queuedMsgInterface, err := q.Get(ctx)
 		if err != nil {
+			if ctx.Err() != nil { // Context cancelled, normal shutdown
+				return nil
+			}
 			log.Println(slack, "Error reading from queue", err)
+			time.Sleep(1 * time.Second) // Avoid fast spin on queue error
+			continue
 		}
-		msg := qm.Message()
-		var slackMsg slackMessage
-		if err := json.Unmarshal(msg, &slackMsg); err != nil {
-			log.Println(slack, "Error parsing", err)
+
+		rawMsgBytes := queuedMsgInterface.Message()
+		qnm, err := services.ParseQueuedMessage(rawMsgBytes)
+		if err != nil {
+			log.Printf("%s: Error parsing QueuedNotificationMessage: %v. Raw: %s. Discarding.", slack, err, string(rawMsgBytes))
+			slack.remove(q, queuedMsgInterface) // Malformed, cannot get DB ID.
+			continue
 		}
-		done, _ := slack.push(slackMsg)
+
+		// Fetch current attempts from DB for more robust counting if desired, for now using local
+		// For simplicity, we'll use a local attempt counter that resets per message from queue.
+		// A more robust system might fetch `notification.Attempts` from qnm.NotificationID via store.GetNotification
+		// and increment that. Here, `currentAttempts` will reflect processing attempts by *this worker cycle*.
+		currentAttempts = 1 // Reset for new message from queue.
+		s.UpdateNotificationStatus(ctx, qnm.NotificationID, "processing", currentAttempts, "")
+
+		var servicePayload slackMessage
+		if err := json.Unmarshal(qnm.Payload, &servicePayload); err != nil {
+			log.Printf("%s: Error unmarshaling Slack payload for NotifID %s: %v. Payload: %s", slack, qnm.NotificationID, err, string(qnm.Payload))
+			s.UpdateNotificationStatus(ctx, qnm.NotificationID, "failed_parse", currentAttempts, err.Error())
+			slack.remove(q, queuedMsgInterface) // Unrecoverable payload error for this service
+			continue
+		}
+
+		if servicePayload.Channel == "" && qnm.RecipientInfo != "" {
+			servicePayload.Channel = qnm.RecipientInfo
+		}
+
+		done, retry := slack.push(servicePayload)
+
 		if done {
-			slack.remove(q, qm)
+			s.UpdateNotificationStatus(ctx, qnm.NotificationID, "sent", currentAttempts, "")
+			slack.remove(q, queuedMsgInterface)
+		} else if retry {
+			currentAttempts++ // Increment attempt for this processing cycle
+			log.Printf("%s: Retrying NotifID %s (local attempts: %d)", slack, qnm.NotificationID, currentAttempts)
+			// Update status to reflect it's queued for retry, and include current attempt count
+			s.UpdateNotificationStatus(ctx, qnm.NotificationID, "retry_queued", currentAttempts, "Service requested retry")
+
+			if errRequeue := q.Requeue(queuedMsgInterface); errRequeue != nil {
+				log.Printf("%s: Error requeuing NotifID %s: %v", slack, qnm.NotificationID, errRequeue)
+				s.UpdateNotificationStatus(ctx, qnm.NotificationID, "failed_requeue", currentAttempts, errRequeue.Error())
+				slack.remove(q, queuedMsgInterface)
+			}
+		} else { // Not done, not retry (e.g. rejected by Slack 4xx)
+			log.Printf("%s: Message NotifID %s rejected by service and not retryable.", slack, qnm.NotificationID)
+			s.UpdateNotificationStatus(ctx, qnm.NotificationID, "rejected", currentAttempts, "Rejected by Slack API")
+			slack.remove(q, queuedMsgInterface)
 		}
 	}
-	return
+	return nil
 }
-func (slack *Slack) Serve(ctx context.Context, q queue.Queue, fc services.FeedbackCollector) (err error) {
-	for i := 0; i < 4; i++ {
-		go slack.ServeClient(ctx, q)
+
+// Serve starts the Slack service worker pool.
+// It now accepts a store.Store instance.
+func (slack *Slack) Serve(ctx context.Context, q queue.Queue, s store.Store, fc services.FeedbackCollector) (err error) {
+	numWorkers := 4 // Configurable number of concurrent workers
+	for i := 0; i < numWorkers; i++ {
 		slack.wg.Add(1)
+		go slack.ServeClient(ctx, q, s)
 	}
-	log.Println(slack, "Worker started")
+	log.Println(slack, "Worker started with", numWorkers, "goroutines")
 	slack.wg.Wait()
 	log.Println(slack, "Worker Finished")
 	return

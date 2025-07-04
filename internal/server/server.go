@@ -9,11 +9,15 @@ import (
 	"github.com/k2glyph/notification-service/internal/services"
 )
 
+	"github.com/k2glyph/notification-service/internal/store"
+)
+
 // Server ..
 type Server struct {
 	server       *http.Server
 	shuttingDown bool
 	queueFactory queue.QueueFactory
+	store        store.Store
 	workers      map[string]*worker
 }
 
@@ -28,7 +32,7 @@ func (s *Server) Serve() (err error) {
 }
 
 // NewServer ...
-func NewServer(addr string, qf queue.QueueFactory) (s *Server) {
+func NewServer(addr string, qf queue.QueueFactory, st store.Store) (s *Server) {
 	mux := http.NewServeMux()
 	h := &http.Server{
 		Addr:    addr,
@@ -37,9 +41,12 @@ func NewServer(addr string, qf queue.QueueFactory) (s *Server) {
 	s = &Server{
 		server:       h,
 		queueFactory: qf,
+		store:        st, // Corrected: store assignment only once
 		workers:      make(map[string]*worker),
 	}
 	mux.HandleFunc("/api/push/", s.handlePush)
+	mux.HandleFunc("/ui/notifications", s.handleUINotifications) // New UI route
+	mux.HandleFunc("/", s.handleUIRedirect)                     // Redirect root to UI
 
 	return s
 }
@@ -63,11 +70,12 @@ func (s *Server) AddService(pp services.PushService) (err error) {
 	if err != nil {
 		return
 	}
-	w, err := newWorker(pp, q)
+	// Pass the store to the worker, so it can pass it to the service or use it directly
+	w, err := newWorker(pp, q, s.store)
 	if err != nil {
 		return
 	}
-	go w.serve(s)
+	go w.serve(s) // s is a FeedbackCollector, maybe the store should be part of it or passed differently
 	s.workers[pp.ID()] = w
 	return
 }

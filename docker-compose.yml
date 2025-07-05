@@ -33,7 +33,12 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - app_network
-
+  redis:
+    image: redis:8.0.2
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
   app:
     build:
       context: .
@@ -41,26 +46,29 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # DATABASE_URL: "postgres://user:password@postgres:5432/notifications_db?sslmode=disable"
-      # DATABASE_TYPE: "postgres"
-      DATABASE_URL: "user_mysql:password_mysql@tcp(mysql:3306)/notifications_db_mysql?parseTime=true"
-      DATABASE_TYPE: "mysql"
+      DATABASE_URL: "postgres://user:password@postgres:5432/notifications_db?sslmode=disable"
+      DATABASE_TYPE: "postgres"
+      # DATABASE_URL: "user_mysql:password_mysql@tcp(mysql:3306)/notifications_db_mysql?parseTime=true"
+      # DATABASE_TYPE: "mysql"
+      # redisURL: "redis://redis:6379"
       slackWebhookURL: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
-      # smtpHost: "smtp.example.com"
-      # smtpPort: 587
-      # smtpUsername: "user@example.com"
-      # smtpPassword: "password"
-      # smtpFrom: "no-reply@example.com"
+      smtpHost: "smtp.example.com"
+      smtpPort: 587
+      smtpUsername: "user@example.com"
+      smtpPassword: "password"
+      smtpFrom: "no-reply@example.com"
       # Add other env vars like SLACK_WEBHOOK_URL, SMTP_HOST etc. as needed
     depends_on:
       - postgres # Or mysql, or both if you want to switch easily
       - mysql
+      - redis
     networks:
       - app_network
 
 volumes:
   postgres_data:
   mysql_data:
+  redis_data:
 
 networks:
   app_network:

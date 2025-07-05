@@ -4,7 +4,7 @@ import { check, sleep } from 'k6';
 // Configurable via environment variables
 const BASE_URL = __ENV.BASE_URL || 'http://localhost:8080';
 const VUS = Number(__ENV.VUS) || 5;
-const DURATION = __ENV.DURATION || '30s';
+const DURATION = __ENV.DURATION || '5s';
 
 export const options = {
   vus: VUS,

@@ -27,6 +27,53 @@ type Store interface {
 	UpdateNotificationStatus(ctx context.Context, notificationID string, status string, attempts int, errorMessage string) error
 	GetNotification(ctx context.Context, notificationID string) (*Notification, error)
 	ListNotifications(ctx context.Context, limit int, offset int) ([]Notification, int, error) // Returns notifications, total count, error
+
+	// --- Methods for Dashboard ---
+	GetDashboardGlobalStats(ctx context.Context, dateRangeStart, dateRangeEnd *time.Time) (*DashboardGlobalStats, error)
+	GetDashboardChannelStats(ctx context.Context, dateRangeStart, dateRangeEnd *time.Time) ([]DashboardChannelStat, error)
+	ListDashboardActivity(ctx context.Context, params DashboardActivityParams) ([]Notification, int, error)
+	GetDashboardVolumeTrend(ctx context.Context, period string, startDate, endDate time.Time) ([]DashboardHistoricalPoint, error)
+	GetDashboardFailureRateTrend(ctx context.Context, period string, startDate, endDate time.Time) ([]DashboardHistoricalPoint, error)
+	GetDashboardQueueSizeTrend(ctx context.Context, period string, startDate, endDate time.Time) ([]DashboardHistoricalPoint, error)
+	GetDashboardFailureReasons(ctx context.Context, dateRangeStart, dateRangeEnd *time.Time, limit int) ([]DashboardFailureReason, error)
+}
+
+// --- Structs for Dashboard Data ---
+type DashboardGlobalStats struct {
+	TotalSent            int64   `json:"totalSent"`
+	TotalFailed          int64   `json:"totalFailed"`
+	NotificationsInQueue int64   `json:"notificationsInQueue"`
+	AvgDeliveryTimeSec   float64 `json:"avgDeliveryTimeSec"`
+	SuccessRate          float64 `json:"successRate"`
+}
+
+type DashboardChannelStat struct {
+	Channel     string  `json:"channel"`
+	Total       int64   `json:"total"`
+	Failed      int64   `json:"failed"`
+	SuccessRate float64 `json:"successRate"`
+}
+
+type DashboardActivityParams struct {
+	Limit         int
+	Offset        int
+	StartDate     *time.Time
+	EndDate       *time.Time
+	ChannelFilter string
+	StatusFilter  string
+	SearchTerm    string
+}
+
+type DashboardHistoricalPoint struct {
+	Date      string `json:"date"` // YYYY-MM-DD or YYYY-MM-DD HH:00
+	Volume    int64  `json:"volume"`
+	Failures  int64  `json:"failures,omitempty"`
+	QueueSize int64  `json:"queueSize,omitempty"`
+}
+
+type DashboardFailureReason struct {
+	Reason string `json:"reason"`
+	Count  int64  `json:"count"`
 }
 
 // StoreFactory defines the interface for creating Store instances.

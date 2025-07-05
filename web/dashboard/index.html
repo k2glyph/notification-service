@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Font Awesome -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"> <!-- Flatpickr CSS -->
+</head>
+<body>
+    <header>
+        <h1>Notification Dashboard</h1>
+        <div class="theme-switcher">
+            <button id="theme-toggle">Toggle Dark/Light Mode</button>
+        </div>
+    </header>
+    <main>
+        <section id="global-stats" class="container">
+            <h2><i class="fas fa-globe-americas"></i>Global Stats</h2>
+            <div class="stats-cards">
+                <div class="card">
+                    <h3>Total Notifications Sent</h3>
+                    <p id="total-sent">10,250</p>
+                </div>
+                <div class="card">
+                    <h3>Total Failed Notifications</h3>
+                    <p id="total-failed">150</p>
+                </div>
+                <div class="card">
+                    <h3>Notifications in Queue</h3>
+                    <p id="in-queue">35</p>
+                </div>
+                <div class="card">
+                    <h3>Avg. Time to Deliver</h3>
+                    <p id="avg-delivery-time">2.5s</p>
+                </div>
+                <div class="card">
+                    <h3>Success Rate</h3>
+                    <p id="success-rate">98.5%</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="channel-stats" class="container">
+            <h2><i class="fas fa-project-diagram"></i>Channel-wise Stats</h2>
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Total Notifications by Channel</h3>
+                    <canvas id="totalNotificationsChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Failed Notifications by Channel</h3>
+                    <canvas id="failedNotificationsChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Success Rate by Channel</h3>
+                    <canvas id="successRateChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="recent-activity" class="container">
+            <h2><i class="fas fa-history"></i>Recent Activity</h2>
+            <div class="main-filters container">
+                <input type="text" id="date-range-picker" placeholder="Select Date Range">
+                <input type="search" id="search-recipient-message" placeholder="Search by Recipient or ID">
+                <button id="export-data-csv">Export CSV</button>
+                <button id="export-data-json">Export JSON</button>
+            </div>
+            <div class="filters"> <!-- Sub-filters for timeline -->
+                <select id="activity-channel-filter">
+                    <option value="">All Channels</option>
+                    <option value="slack">Slack</option>
+                    <option value="email">Email</option>
+                    <option value="telegram">Telegram</option>
+                </select>
+                <select id="activity-status-filter">
+                    <option value="">All Statuses</option>
+                    <option value="success">Success</option>
+                    <option value="failed">Failed</option>
+                </select>
+            </div>
+            <div class="timeline-container">
+                <ul id="activity-timeline">
+                    <!-- Timeline items will be injected by JS -->
+                </ul>
+            </div>
+        </section>
+
+        <section id="historical-trends" class="container">
+            <h2><i class="fas fa-chart-line"></i>Historical Trends</h2>
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Notification Volume (Last 7 Days)</h3>
+                    <canvas id="volumeTrendChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Failure Rate Trend (Last 7 Days)</h3>
+                    <canvas id="failureRateTrendChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Queue Size Trend (Last 24 Hours)</h3>
+                    <canvas id="queueSizeTrendChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <section id="optional-panels" class="container">
+            <h2><i class="fas fa-puzzle-piece"></i>Additional Insights</h2>
+            <div class="tabs">
+                <button class="tab-link active" onclick="openTab(event, 'failed-notifications')"><i class="fas fa-exclamation-triangle"></i> Recent Failures</button>
+                <button class="tab-link" onclick="openTab(event, 'notification-templates')"><i class="fas fa-file-alt"></i> Templates</button>
+                <button class="tab-link" onclick="openTab(event, 'retry-queue')"><i class="fas fa-redo-alt"></i> Retry Queue</button>
+                <button class="tab-link" onclick="openTab(event, 'failure-reasons')"><i class="fas fa-diagnoses"></i> Common Failure Reasons</button>
+            </div>
+
+            <div id="failed-notifications" class="tab-content" style="display: block;">
+                <h3>Recent Failed Notifications</h3>
+                <ul id="failed-notifications-list">
+                    <!-- JS will populate this -->
+                </ul>
+            </div>
+
+            <div id="notification-templates" class="tab-content">
+                <h3>Notification Templates Used</h3>
+                <ul id="templates-list">
+                    <!-- JS will populate this -->
+                </ul>
+            </div>
+
+            <div id="retry-queue" class="tab-content">
+                <h3>Retry Queue Status</h3>
+                <p>Items in retry queue: <span id="retry-queue-size">0</span></p>
+                <ul id="retry-queue-list">
+                    <!-- JS will populate this -->
+                </ul>
+            </div>
+
+            <div id="failure-reasons" class="tab-content">
+                <h3>Common Failure Reasons</h3>
+                <canvas id="failureReasonsChart"></canvas>
+            </div>
+        </section>
+        <!-- More sections will go here -->
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script> <!-- Flatpickr for date range -->
+    <footer>
+        <p>&copy; 2024 Notification System</p>
+    </footer>
+    <script src="script.js"></script>
+</body>
+</html>

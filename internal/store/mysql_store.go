@@ -227,3 +227,70 @@ func (s *mysqlStore) ListNotifications(ctx context.Context, limit int, offset in
 
 	return notifications, totalCount, nil
 }
+
+// --- Dashboard Specific Methods ---
+
+func (s *mysqlStore) GetDashboardGlobalStats(ctx context.Context, dateRangeStart, dateRangeEnd *time.Time) (*DashboardGlobalStats, error) {
+	// TODO: Implement actual SQL query for MySQL
+	stats := &DashboardGlobalStats{
+		TotalSent:            1000, // Placeholder
+		TotalFailed:          50,   // Placeholder
+		NotificationsInQueue: 10,   // Placeholder
+		AvgDeliveryTimeSec:   2.5,  // Placeholder
+		SuccessRate:          95.0, // Placeholder
+	}
+	log.Println("MySQL GetDashboardGlobalStats: Using placeholder data")
+	return stats, nil
+}
+
+func (s *mysqlStore) GetDashboardChannelStats(ctx context.Context, dateRangeStart, dateRangeEnd *time.Time) ([]DashboardChannelStat, error) {
+	// TODO: Implement actual SQL query for MySQL
+	log.Println("MySQL GetDashboardChannelStats: Using placeholder data")
+	return []DashboardChannelStat{
+		{Channel: "slack", Total: 600, Failed: 20, SuccessRate: 96.67}, // Placeholder
+		{Channel: "email", Total: 400, Failed: 30, SuccessRate: 92.50}, // Placeholder
+	}, nil
+}
+
+func (s *mysqlStore) ListDashboardActivity(ctx context.Context, params DashboardActivityParams) ([]Notification, int, error) {
+	// TODO: Implement actual SQL query for MySQL.
+	log.Printf("MySQL ListDashboardActivity: Called with params %+v. Using placeholder data logic (delegating to ListNotifications for now)", params)
+	return s.ListNotifications(ctx, params.Limit, params.Offset)
+}
+
+func (s *mysqlStore) GetDashboardVolumeTrend(ctx context.Context, period string, startDate, endDate time.Time) ([]DashboardHistoricalPoint, error) {
+	// TODO: Implement actual SQL query for MySQL
+	log.Printf("MySQL GetDashboardVolumeTrend: Period %s, Start %v, End %v. Using placeholder data", period, startDate, endDate)
+	return []DashboardHistoricalPoint{
+		{Date: "2024-07-20", Volume: 140}, // Placeholder
+		{Date: "2024-07-21", Volume: 170}, // Placeholder
+	}, nil
+}
+
+func (s *mysqlStore) GetDashboardFailureRateTrend(ctx context.Context, period string, startDate, endDate time.Time) ([]DashboardHistoricalPoint, error) {
+	// TODO: Implement actual SQL query for MySQL
+	log.Printf("MySQL GetDashboardFailureRateTrend: Period %s, Start %v, End %v. Using placeholder data", period, startDate, endDate)
+	return []DashboardHistoricalPoint{
+		{Date: "2024-07-20", Failures: 4}, // Placeholder
+		{Date: "2024-07-21", Failures: 7}, // Placeholder
+	}, nil
+}
+
+func (s *mysqlStore) GetDashboardQueueSizeTrend(ctx context.Context, period string, startDate, endDate time.Time) ([]DashboardHistoricalPoint, error) {
+	// TODO: Implement actual SQL query for MySQL
+	log.Printf("MySQL GetDashboardQueueSizeTrend: Period %s, Start %v, End %v. Using placeholder data", period, startDate, endDate)
+	return []DashboardHistoricalPoint{
+		{Date: "2024-07-21 10:00", QueueSize: 14}, // Placeholder
+		{Date: "2024-07-21 11:00", QueueSize: 11}, // Placeholder
+	}, nil
+}
+
+func (s *mysqlStore) GetDashboardFailureReasons(ctx context.Context, dateRangeStart, dateRangeEnd *time.Time, limit int) ([]DashboardFailureReason, error) {
+	// TODO: Implement actual SQL query for MySQL
+	log.Printf("MySQL GetDashboardFailureReasons: Limit %d. Using placeholder data", limit)
+	return []DashboardFailureReason{
+		{Reason: "Invalid email address (MySQL)", Count: 18}, // Placeholder
+		{Reason: "User unsubscribed (MySQL)", Count: 13},    // Placeholder
+		{Reason: "SMTP server timeout (MySQL)", Count: 8},   // Placeholder
+	}, nil
+}

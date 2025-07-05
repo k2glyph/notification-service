@@ -1,0 +1,654 @@
+/* Basic Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: sans-serif;
+    line-height: 1.6;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.container {
+    width: 90%;
+    margin: auto;
+    overflow: hidden;
+    padding: 0 20px;
+}
+
+header {
+    background: #333;
+    color: #fff;
+    padding: 1rem 0;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+header h1 {
+    margin-bottom: 0.5rem;
+}
+
+.theme-switcher {
+    text-align: center;
+}
+
+#theme-toggle {
+    padding: 0.5rem 1rem;
+    background-color: #555;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#theme-toggle:hover {
+    background-color: #777;
+}
+
+main {
+    padding: 20px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    background: #333;
+    color: #fff;
+    margin-top: 20px;
+}
+
+/* Light Theme (Default) */
+body.light-mode {
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+body.light-mode header {
+    background: #007bff; /* Blue header for light mode */
+    color: #fff;
+}
+
+body.light-mode #theme-toggle {
+    background-color: #0056b3; /* Darker blue for button */
+}
+body.light-mode #theme-toggle:hover {
+    background-color: #003d80;
+}
+
+body.light-mode footer {
+    background: #007bff;
+    color: #fff;
+}
+
+
+/* Dark Theme */
+body.dark-mode {
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+body.dark-mode header {
+    background: #1f1f1f; /* Darker header for dark mode */
+    color: #e0e0e0;
+}
+
+body.dark-mode #theme-toggle {
+    background-color: #333;
+    color: #e0e0e0;
+    border: 1px solid #555;
+}
+
+body.dark-mode #theme-toggle:hover {
+    background-color: #444;
+}
+
+body.dark-mode footer {
+    background: #1f1f1f;
+    color: #e0e0e0;
+}
+
+/* Responsive */
+@media(max-width: 768px) {
+    header h1 {
+        font-size: 1.5rem;
+    }
+    #theme-toggle {
+        padding: 0.4rem 0.8rem;
+    }
+}
+
+/* Global Stats Section */
+#global-stats {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+/* General Section Title Styling */
+section h2 {
+    font-size: 2rem; /* Consistent section title size */
+    margin-bottom: 25px; /* Consistent margin */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px; /* Space between icon and text */
+}
+
+body.dark-mode section h2 {
+    color: #e0e0e0;
+}
+
+
+#global-stats h2 {
+    /* font-size and margin-bottom are now handled by general section h2 */
+}
+
+.stats-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.card {
+    background: #fff;
+    color: #333;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.08); /* Softer shadow */
+    flex: 1;
+    min-width: 200px; /* Minimum width for cards */
+    max-width: 280px; /* Maximum width for cards */
+    text-align: center;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 10px;
+    color: #555;
+}
+
+.card p {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+/* Dark Mode Card Styles */
+body.dark-mode .card {
+    background: #2a2a2a; /* Darker card background */
+    color: #e0e0e0;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25); /* Adjusted dark mode shadow */
+}
+
+body.dark-mode .card:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.35);
+}
+
+body.dark-mode .card h3 {
+    color: #bbb;
+}
+
+body.dark-mode .card p {
+    color: #4dabf7; /* Lighter blue for dark mode text */
+}
+
+body.dark-mode #global-stats h2 {
+    color: #e0e0e0;
+}
+
+/* Channel-wise Stats Section */
+#channel-stats {
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+#channel-stats h2 {
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.charts-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    justify-content: center;
+}
+
+.chart-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    flex: 1;
+    min-width: 300px; /* Adjust as needed */
+    max-width: 45%; /* Allow two charts per row on larger screens */
+}
+
+.chart-card h3 {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    text-align: center;
+    color: #333;
+}
+
+/* Dark Mode Chart Card Styles */
+body.dark-mode #channel-stats h2 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .chart-card {
+    background: #2a2a2a;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+body.dark-mode .chart-card h3 {
+    color: #ccc;
+}
+
+/* Main Filters Section */
+.main-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 15px;
+    background-color: #f9f9f9; /* Light grey background for filter bar */
+    border-radius: 8px;
+    justify-content: center; /* Center filters if they don't fill width */
+}
+
+.main-filters input[type="text"],
+.main-filters input[type="search"],
+.main-filters button {
+    padding: 10px 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 0.9rem;
+}
+
+.main-filters input[type="text"],
+.main-filters input[type="search"] {
+    flex-grow: 1; /* Allow search and date picker to take more space */
+    min-width: 200px; /* Minimum width */
+}
+
+.main-filters button {
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.main-filters button:hover {
+    background-color: #0056b3;
+}
+
+
+/* Dark Mode for Main Filters */
+body.dark-mode .main-filters {
+    background-color: #2c2c2c; /* Darker background for filter bar */
+    border-color: #444;
+}
+
+body.dark-mode .main-filters input[type="text"],
+body.dark-mode .main-filters input[type="search"] {
+    background-color: #333;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-mode .main-filters button {
+    background-color: #0056b3; /* Adjust button color for dark mode if needed */
+    border-color: #004085;
+}
+body.dark-mode .main-filters button:hover {
+    background-color: #003d80;
+}
+
+
+/* Flatpickr custom styling (optional, if needed beyond default dark theme) */
+.flatpickr-calendar.darkTheme { /* Example for dark theme customization if using flatpickr's own dark theme isn't enough */
+    background: #333;
+    color: #fff;
+    border-color: #555;
+}
+.flatpickr-calendar.darkTheme .flatpickr-day {
+    color: #fff;
+}
+.flatpickr-calendar.darkTheme .flatpickr-day:hover,
+.flatpickr-calendar.darkTheme .flatpickr-day.selected {
+    background: #555;
+    border-color: #777;
+}
+
+
+@media (max-width: 992px) { /* Medium devices (tablets, less than 992px) */
+    .chart-card {
+        max-width: 100%; /* Full width on smaller screens */
+    }
+}
+
+/* Recent Activity Section */
+#recent-activity {
+    margin-bottom: 30px;
+}
+
+#recent-activity h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.filters {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.filters select, .filters input {
+    padding: 8px 12px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 0.9rem;
+}
+
+.timeline-container {
+    max-height: 400px; /* Or any desired height */
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+#activity-timeline {
+    list-style: none;
+    padding: 0;
+}
+
+#activity-timeline li {
+    padding: 12px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#activity-timeline li:last-child {
+    border-bottom: none;
+}
+
+#activity-timeline .timestamp {
+    font-size: 0.85rem;
+    color: #777;
+    min-width: 120px;
+}
+
+/* Channel Icons Styling */
+#activity-timeline .channel-icon-slack,
+#activity-timeline .channel-icon-email,
+#activity-timeline .channel-icon-telegram {
+    margin-right: 8px;
+    font-size: 1.1em; /* Slightly larger icons */
+}
+.channel-icon-slack { color: #4A154B; } /* Slack official purple */
+.channel-icon-email { color: #D44638; } /* Generic email red */
+.channel-icon-telegram { color: #0088cc; } /* Telegram blue */
+
+body.dark-mode .channel-icon-slack { color: #E01E5A; } /* Slack dark mode pinkish */
+body.dark-mode .channel-icon-email { color: #f07167; }
+body.dark-mode .channel-icon-telegram { color: #29b6f6; }
+
+
+#activity-timeline .channel {
+    font-weight: bold;
+    min-width: 80px;
+}
+#activity-timeline .destination {
+    color: #555;
+    font-size: 0.9rem;
+    flex-grow: 1;
+    word-break: break-all; /* Prevent overflow */
+}
+#activity-timeline .status {
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    min-width: 70px;
+    text-align: center;
+}
+#activity-timeline .status.success {
+    background-color: #d4edda; /* Light green */
+    color: #155724; /* Dark green */
+}
+#activity-timeline .status.failed {
+    background-color: #f8d7da; /* Light red */
+    color: #721c24; /* Dark red */
+}
+
+/* Dark Mode for Recent Activity */
+body.dark-mode #recent-activity h2 {
+    color: #e0e0e0;
+}
+
+body.dark-mode .filters select, body.dark-mode .filters input {
+    background-color: #333;
+    color: #e0e0e0;
+    border-color: #555;
+}
+
+body.dark-mode .timeline-container {
+    border-color: #333;
+}
+
+body.dark-mode #activity-timeline li {
+    border-bottom-color: #333;
+}
+
+body.dark-mode #activity-timeline .timestamp {
+    color: #aaa;
+}
+body.dark-mode #activity-timeline .channel {
+    color: #d0d0d0;
+}
+body.dark-mode #activity-timeline .destination {
+    color: #bbb;
+}
+body.dark-mode #activity-timeline .status.success {
+    background-color: #1a3e24;
+    color: #a7d7b4;
+}
+body.dark-mode #activity-timeline .status.failed {
+    background-color: #4a1e22;
+    color: #f1b0b7;
+}
+
+@media (max-width: 576px) { /* Small devices (landscape phones, 576px and up) */
+    #activity-timeline li {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    #activity-timeline .timestamp,
+    #activity-timeline .channel,
+    #activity-timeline .destination,
+    #activity-timeline .status {
+        min-width: unset;
+        width: 100%;
+        margin-bottom: 5px;
+    }
+    #activity-timeline .status {
+        text-align: left;
+    }
+}
+
+/* Historical Trends Section */
+#historical-trends {
+    margin-bottom: 30px;
+}
+
+#historical-trends h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+/* Re-use .charts-container and .chart-card from channel-stats if styling is identical */
+/* If specific styling is needed for historical trend charts, define here */
+
+body.dark-mode #historical-trends h2 {
+    color: #e0e0e0;
+}
+
+/* Ensure chart cards in historical trends also adopt dark mode if not already covered */
+body.dark-mode #historical-trends .chart-card {
+    background: #2a2a2a;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+body.dark-mode #historical-trends .chart-card h3 {
+    color: #ccc;
+}
+
+/* Optional Panels Section - Tabs */
+#optional-panels {
+    margin-bottom: 30px;
+}
+
+#optional-panels h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.8rem;
+}
+
+.tabs {
+    overflow: hidden;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.tab-link {
+    background-color: inherit;
+    /* float: left; */ /* Removed float for flexbox */
+    border: none;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    font-size: 1rem;
+    border-bottom: 3px solid transparent; /* For active state */
+    margin: 0 5px; /* Spacing between tabs */
+    display: inline-flex; /* Align icon and text */
+    align-items: center;
+    gap: 8px; /* Space between icon and text in tab */
+}
+
+.tab-link:hover {
+    background-color: #f0f0f0; /* Lighter hover for light mode */
+}
+
+.tab-link.active {
+    border-bottom-color: #007bff; /* Active tab underline */
+    font-weight: bold;
+    color: #007bff;
+}
+
+.tab-content {
+    display: none;
+    padding: 20px; /* Increased padding */
+    border-top: none;
+    background-color: #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Softer shadow */
+    border-radius: 8px; /* Rounded corners for the content box */
+    border: 1px solid #eee; /* Light border for the content box */
+}
+
+.tab-content h3 {
+    margin-top: 0; /* Remove default top margin if any */
+    margin-bottom: 15px;
+    font-size: 1.3rem;
+    color: #333;
+}
+
+#failed-notifications-list, #templates-list, #retry-queue-list {
+    list-style: none;
+    padding: 0;
+    max-height: 300px; /* Max height for lists */
+    overflow-y: auto; /* Scroll if content exceeds max height */
+}
+#failed-notifications-list li, #templates-list li, #retry-queue-list li {
+    padding: 10px; /* Increased padding */
+    border-bottom: 1px solid #f0f0f0; /* Lighter border */
+    font-size: 0.9rem;
+    display: flex; /* For better alignment of content within li */
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+#failed-notifications-list li:last-child, #templates-list li:last-child, #retry-queue-list li:last-child {
+    border-bottom: none;
+}
+#failed-notifications-list .error-message {
+    color: #c0392b; /* A slightly less harsh red */
+    font-style: italic;
+    margin-left: 10px;
+    font-size: 0.85rem;
+}
+#failureReasonsChart { /* Ensure canvas has a defined height for Chart.js */
+    min-height: 300px;
+    max-height: 400px;
+}
+
+
+/* Dark Mode for Optional Panels */
+body.dark-mode #optional-panels h2 {
+    color: #e0e0e0;
+}
+body.dark-mode .tabs {
+    border-bottom-color: #444;
+}
+body.dark-mode .tab-link {
+    color: #ccc;
+}
+body.dark-mode .tab-link:hover {
+    background-color: #3a3a3a;
+}
+body.dark-mode .tab-link.active {
+    border-bottom-color: #4dabf7; /* Lighter blue for active tab underline */
+    color: #4dabf7; /* Match underline color */
+}
+body.dark-mode .tab-content {
+    background-color: #2c2c2c; /* Slightly lighter than card background for differentiation */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.25);
+    border-color: #3a3a3a;
+}
+body.dark-mode .tab-content h3 {
+    color: #d0d0d0;
+}
+body.dark-mode #failed-notifications-list li,
+body.dark-mode #templates-list li,
+body.dark-mode #retry-queue-list li {
+    border-bottom-color: #3a3a3a; /* Darker border */
+    color: #bbb;
+}
+body.dark-mode #failed-notifications-list .error-message {
+    color: #e77f89; /* Lighter, more readable red for dark mode */
+}
+
+/* Ensure chart inside tab content also respects dark mode */
+body.dark-mode #failureReasonsChart {
+    /* Chart.js usually handles its own colors via options, but you might need to style container or pass options */
+}

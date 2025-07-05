@@ -1,0 +1,6 @@
+/* Remove default CRA styles. Global styles are primarily handled by Tailwind via index.css */
+/* Add any custom global styles here if needed, but prefer Tailwind utility classes. */
+body {
+  /* Example: If you wanted a slightly different global font than Tailwind's default */
+  /* font-family: 'Your Custom Font', sans-serif; */
+}

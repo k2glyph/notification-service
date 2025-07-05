@@ -104,6 +104,21 @@ const RecentNotifications: React.FC = () => {
     fetchNotifications(1, filters);
   };
 
+  const handleRetry = async (notificationId: string) => {
+    console.log(`Attempting to retry notification: ${notificationId}`);
+    try {
+      // Optionally, set some loading state for the specific item or globally
+      await axios.post(API_ENDPOINTS.retryNotification(notificationId));
+      alert(`Retry request for notification ${notificationId} sent.`); // Simple feedback
+      // Refetch data to reflect changes
+      fetchNotifications(currentPage, filters);
+    } catch (err) {
+      console.error(`Error retrying notification ${notificationId}:`, err);
+      alert(`Failed to retry notification ${notificationId}.`); // Simple error feedback
+      // Optionally, set an error state
+    }
+  };
+
   const formatDate = (dateString: string) => {
     if (!dateString) return 'N/A';
     try {
@@ -175,6 +190,7 @@ const RecentNotifications: React.FC = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destination</th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Retry Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -192,10 +208,21 @@ const RecentNotifications: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 truncate" title={n.destination}>{n.destination}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{n.retryStatus || 'N/A'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {n.status === 'fail' && (
+                        <button
+                          onClick={() => handleRetry(n.id)}
+                          className="text-indigo-600 hover:text-indigo-900 disabled:opacity-50"
+                          // Potentially disable button if a retry is already in progress for this item
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 )) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">No notifications found matching your criteria.</td>
+                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">No notifications found matching your criteria.</td>
                   </tr>
                 )}
               </tbody>

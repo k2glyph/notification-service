@@ -49,10 +49,31 @@ func NewServer(addr string, qf queue.QueueFactory, st store.Store) (s *Server) {
 	// Dashboard UI static files
 	// Ensure the path is relative to the execution directory or use an absolute path.
 	// Assuming execution from project root.
-	dashboardFS := http.FileServer(http.Dir("./web/dashboard/"))
-	mux.Handle("/dashboard/", http.StripPrefix("/dashboard/", dashboardFS))
+	// TODO: The path "./web/dashboard/" seems incorrect based on the project structure.
+	// It should likely be "./web/build/" or "./web/public/" if the frontend is served directly,
+	// or this entire block might be handled differently if a reverse proxy is used in docker-compose.
+	// For now, leaving as is, but this will need verification for actual deployment.
+	dashboardFS := http.FileServer(http.Dir("./web/build/")) // Assuming frontend build output is in web/build
+	mux.Handle("/", dashboardFS) // Serve frontend from root
 
-	// API Endpoints for Dashboard
+	// New API Endpoints for Dashboard (matching frontend client)
+	mux.HandleFunc("/api/stats/summary", s.apiGetStatsSummary)
+	mux.HandleFunc("/api/stats/channels", s.apiGetStatsChannels)
+	mux.HandleFunc("/api/notifications", s.apiGetNotifications)
+	mux.HandleFunc("/api/notifications/failed", s.apiGetFailedNotifications)
+	mux.HandleFunc("/api/stats/timeseries", s.apiGetStatsTimeSeries)
+	// Note: The POST /api/notifications/:id/retry path needs careful handling with ServeMux
+	// as ServeMux doesn't directly support path parameters in the middle like /api/notifications/ID/retry.
+	// A common pattern is to handle /api/notifications/ and then parse the ID and "retry" suffix internally,
+	// or use a router that supports path parameters.
+	// For now, we'll make a specific path and extract from there, or use a prefix match.
+	// Let's use a prefix match for now and check the method and path suffix in the handler.
+	mux.HandleFunc("/api/notifications/", s.handleNotificationsActions) // Will differentiate GET for list/ID and POST for retry
+
+	mux.HandleFunc("/api/stats/stream", s.apiGetStatsStream) // SSE endpoint
+
+	// Old API Endpoints for Dashboard (commented out)
+	/*
 	mux.HandleFunc("/api/dashboard/global-stats", s.handleGetGlobalStats)
 	mux.HandleFunc("/api/dashboard/channel-stats", s.handleGetChannelStats)
 	mux.HandleFunc("/api/dashboard/recent-activity", s.handleGetRecentActivity)
@@ -66,8 +87,16 @@ func NewServer(addr string, qf queue.QueueFactory, st store.Store) (s *Server) {
 		s.handleGetHistoricalTrend(w, r, "queueSize")
 	})
 	mux.HandleFunc("/api/dashboard/failure-reasons", s.handleGetFailureReasons)
+	*/
 
-	// Redirect root and old UI path to new dashboard
+	// Redirects for old paths are no longer strictly necessary if the frontend is served from root
+	// and handles its own routing. The old /dashboard/ prefix for static assets is also removed.
+	// The handleRootRedirect might be simplified or removed if frontend handles all non-API routes.
+	// For now, any path not matched by API handlers will be passed to dashboardFS.
+	// If dashboardFS is correctly serving an SPA from web/build, this should work.
+	// mux.HandleFunc("/", s.handleRootRedirect) // This is now covered by dashboardFS
+	// mux.HandleFunc("/ui/notifications", s.handleRootRedirect) // Also covered
+
 	// The handleRootRedirect function needs to be part of the Server struct if it's not already.
 	// For now, assuming handleRootRedirect will be defined or adapted in ui.go or here.
 	// If handleUIRedirect in ui.go is suitable, it can be reused or adapted.

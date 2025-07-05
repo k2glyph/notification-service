@@ -532,28 +532,58 @@ func (s *Server) apiGetStatsStream(w http.ResponseWriter, r *http.Request) {
 			log.Println("SSE client disconnected")
 			return
 		case t := <-ticker.C:
-			// Send summary_update
-			summaryData := getMockSummaryData()
-			summaryJSON, _ := json.Marshal(summaryData)
-			fmt.Fprintf(w, "event: summary_update\ndata: %s\n\n", string(summaryJSON))
+			ctx := r.Context() // Use request context for store calls
 
-			// Send channel_stats_update
-			channelData := getMockChannelData()
-			channelJSON, _ := json.Marshal(channelData)
-			fmt.Fprintf(w, "event: channel_stats_update\ndata: %s\n\n", string(channelJSON))
+			// Fetch and send summary_update
+			storeStats, err := s.store.GetDashboardGlobalStats(ctx, nil, nil)
+			if err != nil {
+				log.Printf("SSE: Error getting dashboard global stats from store: %v", err)
+				// Optionally send an error event to client, or just skip this update cycle
+				// fmt.Fprintf(w, "event: error\ndata: %s\n\n", `{"message": "failed to fetch summary stats"}`)
+			} else {
+				if storeStats == nil {
+					storeStats = &store.DashboardGlobalStats{}
+				}
+				summaryAPIResp := SummaryData{
+					TotalNotifications:    int(storeStats.TotalSent),
+					FailedNotifications:   int(storeStats.TotalFailed),
+					NotificationsInQueue:  int(storeStats.NotificationsInQueue),
+					AverageDeliveryTime: storeStats.AvgDeliveryTimeSec,
+					SuccessRate:         storeStats.SuccessRate,
+				}
+				summaryJSON, _ := json.Marshal(summaryAPIResp)
+				fmt.Fprintf(w, "event: summary_update\ndata: %s\n\n", string(summaryJSON))
 
-			// Send queue_size_update
-			// For queue_size_update, the spec asks for a single TimePoint object for queue size.
-			// Example: event: queue_size_update\ndata: {"timestamp":"2023-10-27T10:20:00Z","size":22}\n\n
-			queuePoint := TimeSeriesPoint{
-				Timestamp: t.Format(time.RFC3339),
-				Size:      20 + (int(t.Unix()) % 15), // Mock size fluctuation
+				// Fetch and send queue_size_update (derived from global stats)
+				queuePoint := TimeSeriesPoint{
+					Timestamp: t.Format(time.RFC3339), // Current time of the tick
+					Size:      int(storeStats.NotificationsInQueue),
+				}
+				queueJSON, _ := json.Marshal(queuePoint)
+				fmt.Fprintf(w, "event: queue_size_update\ndata: %s\n\n", string(queueJSON))
 			}
-			queueJSON, _ := json.Marshal(queuePoint)
-			fmt.Fprintf(w, "event: queue_size_update\ndata: %s\n\n", string(queueJSON))
+
+			// Fetch and send channel_stats_update
+			storeChannelStats, err := s.store.GetDashboardChannelStats(ctx, nil, nil)
+			if err != nil {
+				log.Printf("SSE: Error getting dashboard channel stats from store: %v", err)
+				// fmt.Fprintf(w, "event: error\ndata: %s\n\n", `{"message": "failed to fetch channel stats"}`)
+			} else {
+				channelAPIResp := make([]ChannelStatData, len(storeChannelStats))
+				for i, scs := range storeChannelStats {
+					channelAPIResp[i] = ChannelStatData{
+						ChannelName:         scs.Channel,
+						TotalNotifications:  int(scs.Total),
+						FailedNotifications: int(scs.Failed),
+						SuccessRate:         scs.SuccessRate,
+					}
+				}
+				channelJSON, _ := json.Marshal(channelAPIResp)
+				fmt.Fprintf(w, "event: channel_stats_update\ndata: %s\n\n", string(channelJSON))
+			}
 
 			flusher.Flush()
-			log.Println("SSE data sent")
+			log.Println("SSE data sent (live)")
 		}
 	}
 }

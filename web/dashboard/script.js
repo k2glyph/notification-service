@@ -433,6 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function updateAllHistoricalTrendCharts() {
+        if (!volumeTrendCtx || !failureRateTrendCtx || !queueSizeTrendCtx) return;
         volumeTrendChartInstance = await updateHistoricalTrendChart(volumeTrendCtx, volumeTrendChartInstance, '/api/dashboard/historical-trends/volume', 'Notifications Sent', 'volume', '#36A2EB');
         // For failure rate, the API might return 'failures' count and 'volume' (total attempts) per point, or directly a rate.
         // Assuming API for failure-rate returns points with a 'value' field representing the rate.
@@ -629,6 +630,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             });
+        } catch (error) {
+            console.error("Error fetching failure reasons:", error);
+            failureReasonsCtx.font = "16px Arial";
+            failureReasonsCtx.fillText("Error loading chart.", 10, 50);
         }
     }
     // Initial call if the tab is active by default (it's not, but good practice if it were)

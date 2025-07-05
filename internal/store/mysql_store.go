@@ -8,7 +8,7 @@ import (
 	"time" // Required for db.SetConnMaxLifetime, etc.
 
 	_ "github.com/go-sql-driver/mysql" // MySQL driver
-	"github.com/google/uuid"          // For generating UUIDs
+	"github.com/google/uuid"           // For generating UUIDs
 )
 
 // mysqlStore implements the Store interface for MySQL.
@@ -98,7 +98,7 @@ func (s *mysqlStore) UpdateNotificationStatus(ctx context.Context, notificationI
 		UPDATE notifications
 		SET status = ?, attempts = ?, error_message = ?, last_attempt_at = CURRENT_TIMESTAMP(6)
 		WHERE id = ?`
-		// updated_at is handled by ON UPDATE CURRENT_TIMESTAMP(6) in MySQL schema
+	// updated_at is handled by ON UPDATE CURRENT_TIMESTAMP(6) in MySQL schema
 
 	var errMsgSQL sql.NullString
 	if errorMessage != "" {
@@ -290,7 +290,7 @@ func (s *mysqlStore) GetDashboardFailureReasons(ctx context.Context, dateRangeSt
 	log.Printf("MySQL GetDashboardFailureReasons: Limit %d. Using placeholder data", limit)
 	return []DashboardFailureReason{
 		{Reason: "Invalid email address (MySQL)", Count: 18}, // Placeholder
-		{Reason: "User unsubscribed (MySQL)", Count: 13},    // Placeholder
-		{Reason: "SMTP server timeout (MySQL)", Count: 8},   // Placeholder
+		{Reason: "User unsubscribed (MySQL)", Count: 13},     // Placeholder
+		{Reason: "SMTP server timeout (MySQL)", Count: 8},    // Placeholder
 	}, nil
 }

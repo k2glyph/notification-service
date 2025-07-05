@@ -6,7 +6,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	// "time" // Not directly used by this file after removing Connect from postgresStore
+	"time"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 )
@@ -61,7 +61,6 @@ func (f *PostgresStoreFactory) NewStore(connectionString string) (Store, error) 
 
 // Ensure PostgresStoreFactory implements StoreFactory (compile-time check)
 var _ StoreFactory = (*PostgresStoreFactory)(nil)
-
 
 // Close closes the database connection pool. This is part of the Store interface.
 func (s *postgresStore) Close() error {
@@ -132,10 +131,10 @@ func (s *postgresStore) GetNotification(ctx context.Context, notificationID stri
 		&payloadBytes,
 		&n.Status,
 		&n.Attempts,
-		&n.LastAttemptAt,  // Directly scan into *time.Time
+		&n.LastAttemptAt, // Directly scan into *time.Time
 		&n.CreatedAt,
 		&n.UpdatedAt,
-		&n.ErrorMessage,   // Directly scan into *string
+		&n.ErrorMessage, // Directly scan into *string
 	)
 	if err != nil {
 		// pgx.ErrNoRows is handled correctly by returning err
@@ -364,8 +363,8 @@ func (s *postgresStore) ListDashboardActivity(ctx context.Context, params Dashbo
 	if params.SearchTerm != "" {
 		searchTermPattern := "%" + params.SearchTerm + "%"
 		searchClause := "(id::text ILIKE $" + strconv.Itoa(argIdx) +
-						" OR recipient_info ILIKE $" + strconv.Itoa(argIdx+1) +
-						" OR error_message ILIKE $" + strconv.Itoa(argIdx+2) + ")"
+			" OR recipient_info ILIKE $" + strconv.Itoa(argIdx+1) +
+			" OR error_message ILIKE $" + strconv.Itoa(argIdx+2) + ")"
 		whereClauses = append(whereClauses, searchClause)
 		args = append(args, searchTermPattern, searchTermPattern, searchTermPattern) // Add pattern for each ILIKE
 		argIdx += 3
@@ -447,7 +446,6 @@ func (s *postgresStore) GetDashboardVolumeTrend(ctx context.Context, period stri
 		dateFormat = "YYYY-MM-DD" // Or "YYYY-WW" for week number
 	}
 
-
 	query := `
 		SELECT
 			TO_CHAR(date_trunc($1, created_at), $2) AS trend_date,
@@ -465,7 +463,6 @@ func (s *postgresStore) GetDashboardVolumeTrend(ctx context.Context, period stri
 	if period == "hourly" {
 		exclusiveEndDate = endDate.Add(1 * time.Hour)
 	}
-
 
 	rows, err := s.pool.Query(ctx, query, period, dateFormat, startDate, exclusiveEndDate)
 	if err != nil {

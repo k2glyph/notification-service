@@ -46,11 +46,11 @@ services:
       DATABASE_URL: "user_mysql:password_mysql@tcp(mysql:3306)/notifications_db_mysql?parseTime=true"
       DATABASE_TYPE: "mysql"
       slackWebhookURL: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
-      smtpHost: "smtp.example.com"
-      smtpPort: 587
-      smtpUsername: "user@example.com"
-      smtpPassword: "password"
-      smtpFrom: "no-reply@example.com"
+      # smtpHost: "smtp.example.com"
+      # smtpPort: 587
+      # smtpUsername: "user@example.com"
+      # smtpPassword: "password"
+      # smtpFrom: "no-reply@example.com"
       # Add other env vars like SLACK_WEBHOOK_URL, SMTP_HOST etc. as needed
     depends_on:
       - postgres # Or mysql, or both if you want to switch easily

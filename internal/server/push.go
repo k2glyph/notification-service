@@ -1,31 +1,30 @@
 package server
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strings"
-)
-
-func (s *Server) handlePush(w http.ResponseWriter, r *http.Request) {
-	log.Println(r.URL.Path)
-	service := strings.TrimPrefix(r.URL.Path, "/api/push/")
-	wrk, ok := s.workers[service]
-	if !ok {
-		http.NotFound(w, r)
-		return
-	}
-	if r.Method != "POST" {
-		http.Error(w, "Invalid request method.", 405)
-		return
-	}
-
-	"context"
-	"encoding/json"
 
 	"github.com/k2glyph/notification-service/internal/queue"
 )
+
+// func (s *Server) handlePush(w http.ResponseWriter, r *http.Request) {
+// 	log.Println(r.URL.Path)
+// 	service := strings.TrimPrefix(r.URL.Path, "/api/push/")
+// 	_, ok := s.workers[service]
+// 	if !ok {
+// 		http.NotFound(w, r)
+// 		return
+// 	}
+// 	if r.Method != "POST" {
+// 		http.Error(w, "Invalid request method.", 405)
+// 		return
+// 	}
+// }
 
 func (s *Server) handlePush(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL.Path)
@@ -66,7 +65,6 @@ func (s *Server) handlePush(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Recipient info not found or not a string in payload for service %s. Proceeding without it.", serviceID)
 		// Depending on requirements, this could be an error.
 	}
-
 
 	// Record the notification attempt in the database
 	notificationID, err := s.store.RecordNotification(context.Background(), serviceID, requestBodyBytes, recipientInfo)

@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"log"
 
 	"github.com/k2glyph/notification-service/internal/queue"
 	"github.com/k2glyph/notification-service/internal/services"
+	"github.com/k2glyph/notification-service/internal/store"
 )
 
 type worker struct {

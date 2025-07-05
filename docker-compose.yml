@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   postgres:
     image: postgres:13
@@ -22,6 +21,12 @@ services:
       MYSQL_DATABASE: notifications_db_mysql
       MYSQL_USER: user_mysql
       MYSQL_PASSWORD: password_mysql
+    healthcheck:
+      test: mysqladmin ping -h 127.0.0.1 -u $$MYSQL_USER --password=$$MYSQL_PASSWORD
+      start_period: 5s
+      interval: 5s
+      timeout: 5s
+      retries: 55
     ports:
       - "3306:3306"
     volumes:
@@ -40,6 +45,12 @@ services:
       # DATABASE_TYPE: "postgres"
       DATABASE_URL: "user_mysql:password_mysql@tcp(mysql:3306)/notifications_db_mysql?parseTime=true"
       DATABASE_TYPE: "mysql"
+      slackWebhookURL: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+      smtpHost: "smtp.example.com"
+      smtpPort: 587
+      smtpUsername: "user@example.com"
+      smtpPassword: "password"
+      smtpFrom: "no-reply@example.com"
       # Add other env vars like SLACK_WEBHOOK_URL, SMTP_HOST etc. as needed
     depends_on:
       - postgres # Or mysql, or both if you want to switch easily

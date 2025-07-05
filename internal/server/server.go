@@ -7,8 +7,6 @@ import (
 
 	"github.com/k2glyph/notification-service/internal/queue"
 	"github.com/k2glyph/notification-service/internal/services"
-)
-
 	"github.com/k2glyph/notification-service/internal/store"
 )
 
@@ -46,7 +44,7 @@ func NewServer(addr string, qf queue.QueueFactory, st store.Store) (s *Server) {
 	}
 	mux.HandleFunc("/api/push/", s.handlePush)
 	mux.HandleFunc("/ui/notifications", s.handleUINotifications) // New UI route
-	mux.HandleFunc("/", s.handleUIRedirect)                     // Redirect root to UI
+	mux.HandleFunc("/", s.handleUIRedirect)                      // Redirect root to UI
 
 	return s
 }

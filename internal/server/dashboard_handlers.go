@@ -17,11 +17,11 @@ import (
 
 // SummaryData matches GET /api/stats/summary
 type SummaryData struct {
-	TotalNotifications    int     `json:"totalNotifications"`
-	FailedNotifications   int     `json:"failedNotifications"`
-	NotificationsInQueue  int     `json:"notificationsInQueue"`
-	AverageDeliveryTime float64 `json:"averageDeliveryTime"` // in seconds
-	SuccessRate         float64 `json:"successRate"`         // percentage
+	TotalNotifications   int     `json:"totalNotifications"`
+	FailedNotifications  int     `json:"failedNotifications"`
+	NotificationsInQueue int     `json:"notificationsInQueue"`
+	AverageDeliveryTime  float64 `json:"averageDeliveryTime"` // in seconds
+	SuccessRate          float64 `json:"successRate"`         // percentage
 }
 
 // ChannelStatData matches items in GET /api/stats/channels
@@ -34,13 +34,13 @@ type ChannelStatData struct {
 
 // NotificationEntry matches items in GET /api/notifications
 type NotificationEntry struct {
-	ID            string `json:"id"`
-	Timestamp     string `json:"timestamp"` // ISO 8601 format "2023-10-26T10:30:00Z"
-	Channel       string `json:"channel"`
-	Status        string `json:"status"` // e.g., "success", "fail", "pending"
-	Destination   string `json:"destination"`
-	RetryStatus   string `json:"retryStatus"` // e.g., "not_attempted", "attempted", "failed"
-	ErrorMessage  string `json:"errorMessage,omitempty"` // Only for failed notifications
+	ID           string `json:"id"`
+	Timestamp    string `json:"timestamp"` // ISO 8601 format "2023-10-26T10:30:00Z"
+	Channel      string `json:"channel"`
+	Status       string `json:"status"` // e.g., "success", "fail", "pending"
+	Destination  string `json:"destination"`
+	RetryStatus  string `json:"retryStatus"`            // e.g., "not_attempted", "attempted", "failed"
+	ErrorMessage string `json:"errorMessage,omitempty"` // Only for failed notifications
 }
 
 // PaginatedNotificationsResponse matches GET /api/notifications
@@ -53,12 +53,12 @@ type PaginatedNotificationsResponse struct {
 
 // TimeSeriesPoint matches points in time series data
 type TimeSeriesPoint struct {
-	Date  string `json:"date,omitempty"` // YYYY-MM-DD for daily/weekly
-	Week  string `json:"week,omitempty"` // YYYY-Www for weekly
-	Count int    `json:"count,omitempty"`
-	Timestamp string `json:"timestamp,omitempty"` // ISO 8601 for queue size
-	Size      int    `json:"size,omitempty"`
-	FailedCount int  `json:"failedCount,omitempty"`
+	Date        string `json:"date,omitempty"` // YYYY-MM-DD for daily/weekly
+	Week        string `json:"week,omitempty"` // YYYY-Www for weekly
+	Count       int    `json:"count,omitempty"`
+	Timestamp   string `json:"timestamp,omitempty"` // ISO 8601 for queue size
+	Size        int    `json:"size,omitempty"`
+	FailedCount int    `json:"failedCount,omitempty"`
 }
 
 // TimeSeriesData matches GET /api/stats/timeseries
@@ -130,11 +130,11 @@ func (s *Server) apiGetStatsSummary(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := SummaryData{
-		TotalNotifications:    int(storeStats.TotalSent),
-		FailedNotifications:   int(storeStats.TotalFailed),
-		NotificationsInQueue:  int(storeStats.NotificationsInQueue),
-		AverageDeliveryTime: storeStats.AvgDeliveryTimeSec,
-		SuccessRate:         storeStats.SuccessRate,
+		TotalNotifications:   int(storeStats.TotalSent),
+		FailedNotifications:  int(storeStats.TotalFailed),
+		NotificationsInQueue: int(storeStats.NotificationsInQueue),
+		AverageDeliveryTime:  storeStats.AvgDeliveryTimeSec,
+		SuccessRate:          storeStats.SuccessRate,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -194,15 +194,14 @@ func mapStoreNotificationToEntry(n store.Notification) NotificationEntry {
 		retryStatus = "pending"
 	}
 
-
 	return NotificationEntry{
-		ID:            n.ID,
-		Timestamp:     n.CreatedAt.Format(time.RFC3339),
-		Channel:       n.ServiceID, // Assuming ServiceID is the channel identifier
-		Status:        n.Status,
-		Destination:   dest,
-		RetryStatus:   retryStatus,
-		ErrorMessage:  errMsg,
+		ID:           n.ID,
+		Timestamp:    n.CreatedAt.Format(time.RFC3339),
+		Channel:      n.ServiceID, // Assuming ServiceID is the channel identifier
+		Status:       n.Status,
+		Destination:  dest,
+		RetryStatus:  retryStatus,
+		ErrorMessage: errMsg,
 	}
 }
 
@@ -270,16 +269,15 @@ func (s *Server) apiGetStatsTimeSeries(w http.ResponseWriter, r *http.Request) {
 	now := time.Now()
 
 	// Define default date ranges for trends
-	dailyRangeStart := now.AddDate(0, 0, -29) // Last 30 days
-	weeklyRangeStart := now.AddDate(0, 0, - (12*7 -1)) // Last 12 weeks (approx 83 days)
-	failureTrendRangeStart := dailyRangeStart // Same as daily for failures
-	queueSizeRangeStart := now.Add(-24 * time.Hour) // Last 24 hours for queue size
+	dailyRangeStart := now.AddDate(0, 0, -29)          // Last 30 days
+	weeklyRangeStart := now.AddDate(0, 0, -(12*7 - 1)) // Last 12 weeks (approx 83 days)
+	failureTrendRangeStart := dailyRangeStart          // Same as daily for failures
+	queueSizeRangeStart := now.Add(-24 * time.Hour)    // Last 24 hours for queue size
 
 	// Allow overriding with query parameters if needed (not implemented here for brevity)
 	// fromDate, toDate, _ := parseDateRangeParams(r)
 	// if fromDate != nil { dailyRangeStart = *fromDate /* adapt for others */ }
 	// if toDate != nil { now = *toDate /* adapt for others */ }
-
 
 	resp := TimeSeriesData{
 		DailySent:     []TimeSeriesPoint{},
@@ -323,7 +321,6 @@ func (s *Server) apiGetStatsTimeSeries(w http.ResponseWriter, r *http.Request) {
 		// sort.Slice(resp.WeeklySent, func(i, j int) bool { return resp.WeeklySent[i].Week < resp.WeeklySent[j].Week })
 	}
 
-
 	// Failure Trends (Daily)
 	failureStorePoints, err := s.store.GetDashboardFailureRateTrend(ctx, "daily", failureTrendRangeStart, now)
 	if err != nil {
@@ -358,11 +355,10 @@ func (s *Server) apiGetFailedNotifications(w http.ResponseWriter, r *http.Reques
 	// For simplicity, fetch all failed notifications for now, not paginated.
 	// Could add pagination similar to apiGetNotifications if lists get very long.
 	// Max limit can be set if performance becomes an issue.
-	limit := 0 // 0 might mean unlimited in some store implementations, or use a high number.
+	// limit := 0 // 0 might mean unlimited in some store implementations, or use a high number.
 	// Let's use a high number for now, e.g. 500, to avoid accidental unlimited queries.
 	// The frontend does not paginate this view.
 	maxFailedLimit := 500
-
 
 	params := store.DashboardActivityParams{
 		Limit:        maxFailedLimit,
@@ -377,7 +373,6 @@ func (s *Server) apiGetFailedNotifications(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Invalid date format for 'fromDate' or 'toDate'. Use YYYY-MM-DD or RFC3339.", http.StatusBadRequest)
 		return
 	}
-
 
 	storeNotifications, _, err := s.store.ListDashboardActivity(r.Context(), params)
 	if err != nil {
@@ -398,7 +393,8 @@ func (s *Server) apiGetFailedNotifications(w http.ResponseWriter, r *http.Reques
 func (s *Server) apiPostRetryNotification(w http.ResponseWriter, r *http.Request) {
 	pathParts := strings.Split(r.URL.Path, "/")
 	var notificationID string
-	if len(pathParts) >= 4 && parts[0] == "api" && parts[1] == "notifications" && parts[3] == "retry" {
+	// parts := 0
+	if len(pathParts) >= 4 && pathParts[0] == "api" && pathParts[1] == "notifications" && pathParts[3] == "retry" {
 		notificationID = pathParts[2]
 	} else { // Fallback for direct call if path structure is slightly different
 		// This part might be redundant if handleNotificationsActions normalizes the call
@@ -537,7 +533,7 @@ func (s *Server) apiGetStatsStream(w http.ResponseWriter, r *http.Request) {
 			summaryJSON, _ := json.Marshal(summaryData)
 			fmt.Fprintf(w, "event: summary_update\ndata: %s\n\n", string(summaryJSON))
 
-			// Send channel_stats_update
+			// Send channel_stats_updatecd
 			channelData := getMockChannelData()
 			channelJSON, _ := json.Marshal(channelData)
 			fmt.Fprintf(w, "event: channel_stats_update\ndata: %s\n\n", string(channelJSON))
@@ -558,6 +554,13 @@ func (s *Server) apiGetStatsStream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getMockChannelData() any {
+	panic("unimplemented")
+}
+
+func getMockSummaryData() any {
+	panic("unimplemented")
+}
 
 /*
 // Old handlers - can be removed or adapted further if any specific logic needs to be preserved.

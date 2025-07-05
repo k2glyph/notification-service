@@ -54,7 +54,7 @@ func NewServer(addr string, qf queue.QueueFactory, st store.Store) (s *Server) {
 	// or this entire block might be handled differently if a reverse proxy is used in docker-compose.
 	// For now, leaving as is, but this will need verification for actual deployment.
 	dashboardFS := http.FileServer(http.Dir("./web/build/")) // Assuming frontend build output is in web/build
-	mux.Handle("/", dashboardFS) // Serve frontend from root
+	mux.Handle("/", dashboardFS)                             // Serve frontend from root
 
 	// New API Endpoints for Dashboard (matching frontend client)
 	mux.HandleFunc("/api/stats/summary", s.apiGetStatsSummary)
@@ -72,64 +72,8 @@ func NewServer(addr string, qf queue.QueueFactory, st store.Store) (s *Server) {
 
 	mux.HandleFunc("/api/stats/stream", s.apiGetStatsStream) // SSE endpoint
 
-	// Old API Endpoints for Dashboard (commented out)
-	/*
-	mux.HandleFunc("/api/dashboard/global-stats", s.handleGetGlobalStats)
-	mux.HandleFunc("/api/dashboard/channel-stats", s.handleGetChannelStats)
-	mux.HandleFunc("/api/dashboard/recent-activity", s.handleGetRecentActivity)
-	mux.HandleFunc("/api/dashboard/historical-trends/volume", func(w http.ResponseWriter, r *http.Request) {
-		s.handleGetHistoricalTrend(w, r, "volume")
-	})
-	mux.HandleFunc("/api/dashboard/historical-trends/failure-rate", func(w http.ResponseWriter, r *http.Request) {
-		s.handleGetHistoricalTrend(w, r, "failureRate")
-	})
-	mux.HandleFunc("/api/dashboard/historical-trends/queue-size", func(w http.ResponseWriter, r *http.Request) {
-		s.handleGetHistoricalTrend(w, r, "queueSize")
-	})
-	mux.HandleFunc("/api/dashboard/failure-reasons", s.handleGetFailureReasons)
-	*/
-
-	// Redirects for old paths are no longer strictly necessary if the frontend is served from root
-	// and handles its own routing. The old /dashboard/ prefix for static assets is also removed.
-	// The handleRootRedirect might be simplified or removed if frontend handles all non-API routes.
-	// For now, any path not matched by API handlers will be passed to dashboardFS.
-	// If dashboardFS is correctly serving an SPA from web/build, this should work.
-	// mux.HandleFunc("/", s.handleRootRedirect) // This is now covered by dashboardFS
-	// mux.HandleFunc("/ui/notifications", s.handleRootRedirect) // Also covered
-
-	// The handleRootRedirect function needs to be part of the Server struct if it's not already.
-	// For now, assuming handleRootRedirect will be defined or adapted in ui.go or here.
-	// If handleUIRedirect in ui.go is suitable, it can be reused or adapted.
-	// Let's define a simple redirect here for clarity and update ui.go separately.
-	mux.HandleFunc("/", s.handleRootRedirect)
-	mux.HandleFunc("/ui/notifications", s.handleRootRedirect) // Explicitly redirect old path
-
-	// mux.HandleFunc("/ui/notifications", s.handleUINotifications) // This line will be removed or handled by the new redirect.
-	// The old s.handleUIRedirect might need to be removed if it conflicts or its logic is fully replaced.
-
 	return s
 }
-
-// handleRootRedirect redirects to the new dashboard.
-// This function can be part of Server struct methods.
-func (s *Server) handleRootRedirect(w http.ResponseWriter, r *http.Request) {
-	// Check if it's an API call or a specific known path that shouldn't be redirected.
-	// For this simple case, any unhandled path "/" or "/ui/notifications" goes to dashboard.
-	if r.URL.Path == "/" || r.URL.Path == "/ui/notifications" {
-		http.Redirect(w, r, "/dashboard/", http.StatusFound)
-		return
-	}
-	// If it's not the root or old UI path, and not handled by other mux rules, it's a 404.
-	// However, http.ServeMux handles this by default if no other pattern matches.
-	// If other specific non-dashboard non-API paths existed, they'd need their own handlers.
-	// For now, if it's not "/" or "/ui/notifications", it might be a 404 unless another handler matches.
-	// To ensure only specific paths are redirected and others 404 correctly,
-	// this handler should ideally only be for "/" and "/ui/notifications".
-	// Any other unhandled path will naturally 404 with ServeMux.
-	// The current setup is fine as long as no other top-level paths are expected to be handled by a generic catch-all.
-	http.NotFound(w, r) // Default for paths not matching / or /ui/notifications
-}
-
 
 // Shutdown ...
 func (s *Server) Shutdown(ctx context.Context) (err error) {
